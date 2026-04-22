@@ -32,6 +32,10 @@
       const res = await fetch(`/status/${id}`);
       const data = await res.json();
       renderJob(id, data.status);
+      if (data.error) {
+    renderJob(id, `error: ${data.error}`);
+    return;
+  }
       if (data.status !== 'completed') {
         setTimeout(() => pollJob(id), 2000);
       }

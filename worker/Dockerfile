@@ -13,7 +13,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 COPY requirements.txt .
 
-RUN pip install --upgrade pip && \
+RUN pip install --upgrade pip==26.0.1 && \
     pip install --no-cache-dir -r requirements.txt
 
 # ==============================================================

@@ -8,6 +8,7 @@ r = redis.Redis(
     port=int(os.getenv("REDIS_PORT", 6379))
 )
 
+
 def process_job(job_id):
     try:
         print(f"Processing job {job_id}")
@@ -17,6 +18,7 @@ def process_job(job_id):
     except Exception as e:
         print(f"ERROR processing {job_id}: {e}")
         r.hset(f"job:{job_id}", "status", "failed")
+
 
 while True:
     job = r.brpop("job", timeout=5)

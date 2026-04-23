@@ -1,13 +1,12 @@
-version: "3.9"
+
 
 networks:
   internal:
     driver: bridge
 
 services:
-
   redis:
-    image: redis:7-alpine
+    image: redis:latest
     networks:
       - internal
     # NO ports block — Redis is never exposed to host machine

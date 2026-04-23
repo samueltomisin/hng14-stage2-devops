@@ -1,48 +1,44 @@
 # ==============================================================
-# Stage 1: Builder — install dependencies only
+# Stage 1: Builder
 # ==============================================================
 FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
-# Copy requirements
+RUN python -m venv /opt/venv
+
+ENV PATH="/opt/venv/bin:$PATH"
+
 COPY requirements.txt .
 
 RUN pip install --upgrade pip && \
-    pip install --user --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt
 
 
 # ==============================================================
-# Stage 2: Production — lean final image, no build tools
+# Stage 2: Production
 # ==============================================================
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Create non-root user and group
 RUN addgroup --system appgroup && \
     adduser --system --ingroup appgroup --no-create-home appuser
 
-# Copy installed packages from builder stage
-COPY --from=builder /root/.local /home/appuser/.local
+# Copy venv
+COPY --from=builder /opt/venv /opt/venv
 
-# Copy application source (no .env, no secrets)
 COPY main.py .
 COPY requirements.txt .
 
-# Fix ownership
 RUN chown -R appuser:appgroup /app
 
-# Switch to non-root user
 USER appuser
 
-# Make sure installed packages are on PATH
-ENV PATH=/home/appuser/.local/bin:$PATH
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Expose app port
 EXPOSE 8000
 
-# Health check — hits the /health endpoint we added
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 

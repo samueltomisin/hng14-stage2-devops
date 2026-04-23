@@ -5,11 +5,16 @@ FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
+# Create virtual environment 
+RUN python -m venv /opt/venv
+
+# Activate venv by putting it first on PATH
+ENV PATH="/opt/venv/bin:$PATH"
+
 COPY requirements.txt .
 
 RUN pip install --upgrade pip && \
-    pip install --user --no-cache-dir -r requirements.txt
-
+    pip install --no-cache-dir -r requirements.txt
 
 # ==============================================================
 # Stage 2: Production
@@ -18,23 +23,25 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Non-root user
+# Create non-root user
 RUN addgroup --system appgroup && \
     adduser --system --ingroup appgroup --no-create-home appuser
 
-# Copy packages from builder
-COPY --from=builder /root/.local /home/appuser/.local
+# Copy the entire venv from builder — not /root/.local
+COPY --from=builder /opt/venv /opt/venv
 
 # Copy worker source
 COPY worker.py .
 
+# Fix ownership of app files
 RUN chown -R appuser:appgroup /app
 
+# Switch to non-root
 USER appuser
 
-ENV PATH=/home/appuser/.local/bin:$PATH
+# Activate venv in final stage
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Worker has no HTTP port — health check via Redis ping instead
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
     CMD python -c "import redis, os; r = redis.Redis(host=os.getenv('REDIS_HOST','redis'), port=int(os.getenv('REDIS_PORT',6379))); r.ping()" || exit 1
 

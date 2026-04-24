@@ -4,14 +4,14 @@ on:
   push:
     branches: ["main", "HNG/stage2-solution"]
   pull_request:
-    branches: ["main"]
+    branches: ["main", "HNG/stage2-solution"]
 
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-  
+
 jobs:
 
 # ════════════════════════════════════════════════════════════════

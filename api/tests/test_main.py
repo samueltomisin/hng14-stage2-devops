@@ -4,21 +4,25 @@ from unittest.mock import patch, MagicMock
 import sys
 import os
 
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 
-# ── Mock Redis before importing app ──────────────────────────
+# ── Patch Redis at module level BEFORE importing app ──────────
+with patch('redis.Redis'):
+    from main import app
+
+
+client = TestClient(app)
+
+
+# ── Mock Redis fixture for individual tests ──────────────────────────
 @pytest.fixture(autouse=True)
 def mock_redis():
-    with patch('redis.Redis') as mock:
+    with patch('main.redis.Redis') as mock:
         instance = MagicMock()
         mock.return_value = instance
         yield instance
-
-
-from main import app  # noqa: E402 — must import after mock
-
-client = TestClient(app)
 
 
 # ── Test 1: Health endpoint returns 200 ──────────────────────

@@ -13,7 +13,6 @@ r = redis.Redis(
 
 @app.post("/jobs")
 def create_job():
-    r = get_redis()
     job_id = str(uuid.uuid4())
     r.lpush("job", job_id)
     r.hset(f"job:{job_id}", "status", "queued")
@@ -22,7 +21,6 @@ def create_job():
 
 @app.get("/jobs/{job_id}")
 def get_job(job_id: str):
-    r = get_redis()
     status = r.hget(f"job:{job_id}", "status")
     if not status:
         raise HTTPException(status_code=404, detail="Job not found")
